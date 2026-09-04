@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maukensen Grid</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --primary: #bb86fc;
+            --primary-hover: #9955e8;
+            --border-color: #333333;
+            --input-bg: #2d2d2d;
+            --cell-bg: #252525;
+            --cell-border: #444444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+            color: #ffffff;
+        }
+
+        p {
+            color: #aaaaaa;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            max-width: 900px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .section-box {
+            background-color: #262626;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-group label {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #cccccc;
+        }
+
+        .control-group input, .control-group select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: #121212;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s, transform 0.1s;
+            height: 38px;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-danger {
+            background-color: #cf6679;
+            color: #121212;
+        }
+        .btn-danger:hover {
+            background-color: #b54f63;
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* Estilos de la Grid */
+        .grid-wrapper {
+            overflow: auto;
+            max-height: 600px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: #171717;
+            padding: 10px;
+            margin-top: 20px;
+        }
+
+        #grid-container {
+            display: grid;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .grid-cell {
+            background-color: var(--cell-bg);
+            border: 2px dashed var(--cell-border);
+            border-radius: 6px;
+            min-width: 75px;
+            min-height: 75px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 11px;
+            text-align: center;
+            padding: 4px;
+            box-sizing: border-box;
+            color: #999999;
+            transition: transform 0.1s, border-color 0.2s;
+            word-break: break-word;
+        }
+
+        .grid-cell:hover {
+            transform: scale(1.03);
+            border-color: var(--primary);
+            color: #ffffff;
+        }
+
+        .grid-cell.reserved {
+            border-style: solid;
+            border-color: rgba(255,255,255,0.2);
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            font-weight: bold;
+        }
+
+        .cell-number {
+            font-size: 10px;
+            opacity: 0.6;
+            margin-bottom: 2px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Maukensen Grid</h1>
+        <p></p>
+
+        <!-- 1. Gestor de Cuadrícula Arriba -->
+        <div class="section-box">
+            <div class="section-title">1. Cuadrícula</div>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="rows">Filas:</label>
+                    <input type="number" id="rows" value="4" min="1" max="20">
+                </div>
+                <div class="control-group">
+                    <label for="cols">Columnas:</label>
+                    <input type="number" id="cols" value="4" min="1" max="20">
+                </div>
+                <button class="btn" id="btn-generate">Generar / Reiniciar Grid</button>
+            </div>
+        </div>
+
+        <!-- 2. Gestor de Personas Abajo -->
+        <div class="section-box">
+            <div class="section-title">2. Añadir Persona</div>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="person-name">Nombre:</label>
+                    <input type="text" id="person-name" placeholder="">
+                </div>
+                <div class="control-group">
+                    <label for="person-color">Color de Reserva:</label>
+                    <input type="color" id="person-color" value="#bb86fc" style="height: 38px; padding: 2px; width: 100%; box-sizing: border-box; background-color: var(--input-bg); cursor: pointer;">
+                </div>
+                <button class="btn btn-danger" id="btn-clear">Limpiar Reservas</button>
+            </div>
+        </div>
+
+        <!-- Área de la Grid -->
+        <div class="grid-wrapper">
+            <div id="grid-container"></div>
+        </div>
+    </div>
+
+    <script>
+        const rowsInput = document.getElementById('rows');
+        const colsInput = document.getElementById('cols');
+        const nameInput = document.getElementById('person-name');
+        const colorInput = document.getElementById('person-color');
+        const btnGenerate = document.getElementById('btn-generate');
+        const btnClear = document.getElementById('btn-clear');
+        const gridContainer = document.getElementById('grid-container');
+
+        let reservations = {}; 
+
+        function initGrid() {
+            const rows = parseInt(rowsInput.value);
+            const cols = parseInt(colsInput.value);
+            const totalCells = rows * cols;
+
+            gridContainer.style.gridTemplateColumns = `repeat(${cols}, minmax(75px, 1fr))`;
+            gridContainer.innerHTML = '';
+
+            for (let i = 1; i <= totalCells; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.dataset.id = i;
+
+                if (reservations[i]) {
+                    applyReservationToCell(cell, i, reservations[i].name, reservations[i].color);
+                } else {
+                    cell.innerHTML = `<span class="cell-number">#${i}</span><span>Disponible</span>`;
+                }
+
+                cell.addEventListener('click', () => handleCellClick(cell, i));
+                gridContainer.appendChild(cell);
+            }
+        }
+
+        function handleCellClick(cell, id) {
+            const name = nameInput.value.trim();
+            const color = colorInput.value;
+
+            if (!name) {
+                alert('Por favor, escribe el nombre de la persona antes de reservar un cuadrado.');
+                nameInput.focus();
+                return;
+            }
+
+            if (reservations[id] && reservations[id].name.toLowerCase() === name.toLowerCase()) {
+                delete reservations[id];
+                cell.className = 'grid-cell';
+                cell.innerHTML = `<span class="cell-number">#${id}</span><span>Disponible</span>`;
+            } else {
+                reservations[id] = { name, color };
+                applyReservationToCell(cell, id, name, color);
+            }
+            
+            saveToLocalStorage();
+        }
+
+        function applyReservationToCell(cell, id, name, color) {
+            cell.className = 'grid-cell reserved';
+            cell.style.backgroundColor = color;
+            cell.innerHTML = `<span class="cell-number">#${id}</span><span>${name}</span>`;
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('grid_reservations_clean', JSON.stringify(reservations));
+            localStorage.setItem('grid_rows_clean', rowsInput.value);
+            localStorage.setItem('grid_cols_clean', colsInput.value);
+        }
+
+        function loadFromLocalStorage() {
+            const savedReservations = localStorage.getItem('grid_reservations_clean');
+            const savedRows = localStorage.getItem('grid_rows_clean');
+            const savedCols = localStorage.getItem('grid_cols_clean');
+
+            if (savedRows && savedCols) {
+                rowsInput.value = savedRows;
+                colsInput.value = savedCols;
+            }
+            if (savedReservations) {
+                reservations = JSON.parse(savedReservations);
+            }
+        }
+
+        btnGenerate.addEventListener('click', () => {
+            initGrid();
+            saveToLocalStorage();
+        });
+
+        btnClear.addEventListener('click', () => {
+            if (confirm('¿Estás seguro de que deseas limpiar todas las reservas?')) {
+                reservations = {};
+                localStorage.removeItem('grid_reservations_clean');
+                initGrid();
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+            initGrid();
+        });
+    </script>
+</body>
+</html>
