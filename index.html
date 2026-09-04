@@ -29,13 +29,8 @@
         }
 
         h1 {
-            margin-bottom: 5px;
-            color: #ffffff;
-        }
-
-        p {
-            color: #aaaaaa;
             margin-bottom: 20px;
+            color: #ffffff;
         }
 
         .container {
@@ -115,11 +110,12 @@
             background-color: #b54f63;
         }
 
-        .actions-bar {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            flex-wrap: wrap;
+        .btn-secondary {
+            background-color: #03dac6;
+            color: #121212;
+        }
+        .btn-secondary:hover {
+            background-color: #018786;
         }
 
         /* Estilos de la Grid */
@@ -185,31 +181,40 @@
 
     <div class="container">
         <h1>Maukensen Grid</h1>
-        <p></p>
 
-        <!-- 1. Gestor de Cuadrícula Arriba -->
+        <div class="section-box">
+            <div class="section-title">0. Mis Grids Guardadas</div>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="grid-select">Seleccionar Grid:</label>
+                    <select id="grid-select"></select>
+                </div>
+                <button class="btn btn-secondary" id="btn-save-new">Guardar como Nueva</button>
+                <button class="btn btn-danger" id="btn-delete-grid">Borrar Grid Actual</button>
+            </div>
+        </div>
+
         <div class="section-box">
             <div class="section-title">1. Cuadrícula</div>
             <div class="controls">
                 <div class="control-group">
                     <label for="rows">Filas:</label>
-                    <input type="number" id="rows" value="4" min="1" max="20">
+                    <input type="number" id="rows" value="6" min="1" max="20">
                 </div>
                 <div class="control-group">
                     <label for="cols">Columnas:</label>
-                    <input type="number" id="cols" value="4" min="1" max="20">
+                    <input type="number" id="cols" value="5" min="1" max="20">
                 </div>
                 <button class="btn" id="btn-generate">Generar / Reiniciar Grid</button>
             </div>
         </div>
 
-        <!-- 2. Gestor de Personas Abajo -->
         <div class="section-box">
             <div class="section-title">2. Añadir Persona</div>
             <div class="controls">
                 <div class="control-group">
                     <label for="person-name">Nombre:</label>
-                    <input type="text" id="person-name" placeholder="">
+                    <input type="text" id="person-name" placeholder="Ej. Ana, Juan...">
                 </div>
                 <div class="control-group">
                     <label for="person-color">Color de Reserva:</label>
@@ -219,7 +224,6 @@
             </div>
         </div>
 
-        <!-- Área de la Grid -->
         <div class="grid-wrapper">
             <div id="grid-container"></div>
         </div>
@@ -232,9 +236,71 @@
         const colorInput = document.getElementById('person-color');
         const btnGenerate = document.getElementById('btn-generate');
         const btnClear = document.getElementById('btn-clear');
+        const btnSaveNew = document.getElementById('btn-save-new');
+        const btnDeleteGrid = document.getElementById('btn-delete-grid');
+        const gridSelect = document.getElementById('grid-select');
         const gridContainer = document.getElementById('grid-container');
 
-        let reservations = {}; 
+        let currentGridId = 'grid_default';
+        let currentData = {
+            name: 'Maukensen Grid Principal',
+            rows: 6,
+            cols: 5,
+            reservations: {}
+        };
+
+        function getAllGrids() {
+            const saved = localStorage.getItem('maukensen_all_grids');
+            if (saved) {
+                return JSON.parse(saved);
+            }
+            return {
+                'grid_default': {
+                    name: 'Maukensen Grid Principal',
+                    rows: 6,
+                    cols: 5,
+                    reservations: {}
+                }
+            };
+        }
+
+        function saveAllGrids(grids) {
+            localStorage.setItem('maukensen_all_grids', JSON.stringify(grids));
+        }
+
+        function updateGridSelect() {
+            const grids = getAllGrids();
+            gridSelect.innerHTML = '';
+            for (const id in grids) {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = grids[id].name;
+                if (id === currentGridId) {
+                    option.selected = true;
+                }
+                gridSelect.appendChild(option);
+            }
+        }
+
+        function loadGrid(gridId) {
+            const grids = getAllGrids();
+            if (grids[gridId]) {
+                currentGridId = gridId;
+                currentData = grids[gridId];
+                rowsInput.value = currentData.rows;
+                colsInput.value = currentData.cols;
+                initGrid();
+                updateGridSelect();
+            }
+        }
+
+        function saveCurrentState() {
+            const grids = getAllGrids();
+            currentData.rows = parseInt(rowsInput.value);
+            currentData.cols = parseInt(colsInput.value);
+            grids[currentGridId] = currentData;
+            saveAllGrids(grids);
+        }
 
         function initGrid() {
             const rows = parseInt(rowsInput.value);
@@ -249,8 +315,8 @@
                 cell.className = 'grid-cell';
                 cell.dataset.id = i;
 
-                if (reservations[i]) {
-                    applyReservationToCell(cell, i, reservations[i].name, reservations[i].color);
+                if (currentData.reservations[i]) {
+                    applyReservationToCell(cell, i, currentData.reservations[i].name, currentData.reservations[i].color);
                 } else {
                     cell.innerHTML = `<span class="cell-number">#${i}</span><span>Disponible</span>`;
                 }
@@ -270,16 +336,16 @@
                 return;
             }
 
-            if (reservations[id] && reservations[id].name.toLowerCase() === name.toLowerCase()) {
-                delete reservations[id];
+            if (currentData.reservations[id] && currentData.reservations[id].name.toLowerCase() === name.toLowerCase()) {
+                delete currentData.reservations[id];
                 cell.className = 'grid-cell';
                 cell.innerHTML = `<span class="cell-number">#${id}</span><span>Disponible</span>`;
             } else {
-                reservations[id] = { name, color };
+                currentData.reservations[id] = { name, color };
                 applyReservationToCell(cell, id, name, color);
             }
             
-            saveToLocalStorage();
+            saveCurrentState();
         }
 
         function applyReservationToCell(cell, id, name, color) {
@@ -288,42 +354,64 @@
             cell.innerHTML = `<span class="cell-number">#${id}</span><span>${name}</span>`;
         }
 
-        function saveToLocalStorage() {
-            localStorage.setItem('grid_reservations_clean', JSON.stringify(reservations));
-            localStorage.setItem('grid_rows_clean', rowsInput.value);
-            localStorage.setItem('grid_cols_clean', colsInput.value);
-        }
-
-        function loadFromLocalStorage() {
-            const savedReservations = localStorage.getItem('grid_reservations_clean');
-            const savedRows = localStorage.getItem('grid_rows_clean');
-            const savedCols = localStorage.getItem('grid_cols_clean');
-
-            if (savedRows && savedCols) {
-                rowsInput.value = savedRows;
-                colsInput.value = savedCols;
-            }
-            if (savedReservations) {
-                reservations = JSON.parse(savedReservations);
-            }
-        }
-
         btnGenerate.addEventListener('click', () => {
+            currentData.rows = parseInt(rowsInput.value);
+            currentData.cols = parseInt(colsInput.value);
             initGrid();
-            saveToLocalStorage();
+            saveCurrentState();
         });
 
         btnClear.addEventListener('click', () => {
-            if (confirm('¿Estás seguro de que deseas limpiar todas las reservas?')) {
-                reservations = {};
-                localStorage.removeItem('grid_reservations_clean');
+            if (confirm('¿Estás seguro de que deseas limpiar todas las reservas de esta grid?')) {
+                currentData.reservations = {};
                 initGrid();
+                saveCurrentState();
             }
         });
 
+        btnSaveNew.addEventListener('click', () => {
+            const gridName = prompt('Introduce un nombre para la nueva grid:', 'Nueva Maukensen Grid');
+            if (!gridName) return;
+
+            const newId = 'grid_' + Date.now();
+            const grids = getAllGrids();
+
+            grids[newId] = {
+                name: gridName,
+                rows: parseInt(rowsInput.value),
+                cols: parseInt(colsInput.value),
+                reservations: JSON.parse(JSON.stringify(currentData.reservations))
+            };
+
+            saveAllGrids(grids);
+            loadGrid(newId);
+        });
+
+        btnDeleteGrid.addEventListener('click', () => {
+            const grids = getAllGrids();
+            const keys = Object.keys(grids);
+
+            if (keys.length <= 1) {
+                alert('No puedes borrar la única grid que tienes.');
+                return;
+            }
+
+            if (confirm(`¿Estás seguro de que deseas eliminar permanentemente la grid "${currentData.name}"?`)) {
+                delete grids[currentGridId];
+                saveAllGrids(grids);
+                const nextId = Object.keys(grids)[0];
+                loadGrid(nextId);
+            }
+        });
+
+        gridSelect.addEventListener('change', (e) => {
+            loadGrid(e.target.value);
+        });
+
         window.addEventListener('DOMContentLoaded', () => {
-            loadFromLocalStorage();
-            initGrid();
+            const grids = getAllGrids();
+            const firstKey = Object.keys(grids)[0];
+            loadGrid(firstKey);
         });
     </script>
 </body>
